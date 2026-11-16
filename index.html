@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Паспорт здоровья</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+<script>
+(function(){try{var t=localStorage.getItem('hp-theme');if(t!=='dark'&&t!=='light'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}var r=document.documentElement;r.setAttribute('data-theme',t);r.classList.add(t==='dark'?'theme-dark':'theme-light');r.style.colorScheme=t==='dark'?'only dark':'only light'}catch(e){document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.add('theme-light')}})();
+</script>
+<style>
+html.theme-light, :root[data-theme="light"], :root{
+  --bg:#FFF3F7;--card:#ffffff;--ink:#150910;--mute:#7C5568;--line:#F5CFDD;
+  --acc:#D6336C;--acc-ink:#ffffff;--acc-soft:#FFE4EE;
+  --ok:#1F7A4D;--okbg:#DDF1E6;--warn:#8A5A00;--warnbg:#FBEBC8;--bad:#A3241B;--badbg:#F9DAD6;
+  --shadow:0 4px 24px rgba(214,51,108,.07);--radius:18px;
+  color-scheme:only light;
+}
+html.theme-dark, :root[data-theme="dark"]{
+  --bg:#110811;--card:#1D1019;--ink:#FFEEF4;--mute:#D3A3B8;--line:#4A2A3A;
+  --acc:#FF8FB8;--acc-ink:#240A15;--acc-soft:#3A1A2A;
+  --ok:#7AD8A3;--okbg:#17372A;--warn:#F0C36A;--warnbg:#3A2E10;--bad:#FF9D94;--badbg:#421D1A;
+  --shadow:0 4px 28px rgba(0,0,0,.35);
+  color-scheme:only dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;touch-action:manipulation;background:var(--bg)}
+body{margin:0;background:var(--bg)!important;color:var(--ink)!important;font:16px/1.55 Onest,system-ui,sans-serif;min-height:100vh;position:relative;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+/* карточки и поля всегда от переменных */
+.card,input,select,textarea,nav,.modal .box{
+  background:var(--card)!important;color:var(--ink);
+  border-color:var(--line)!important;
+}
+input,select,textarea{background:var(--bg)!important}
+.bg-blobs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;contain:strict}
+.bg-blob{position:absolute;border-radius:50%;filter:blur(50px);opacity:.22}
+.bg-blob:nth-child(1){width:280px;height:280px;background:#FF8FB8;top:-50px;left:-30px}
+.bg-blob:nth-child(2){width:240px;height:240px;background:#F5CFDD;bottom:10%;right:-20px;opacity:.25}
+.bg-blob:nth-child(3){width:180px;height:180px;background:#D6336C;bottom:-30px;left:30%;opacity:.12}
+html.theme-dark .bg-blob,:root[data-theme="dark"] .bg-blob{opacity:.08}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 60px;position:relative;z-index:1}
+h1{font-size:clamp(28px,6vw,44px);line-height:1.05;margin:8px 0 6px;font-weight:800;letter-spacing:-.02em}
+h2{font-size:22px;margin:0 0 12px;font-weight:700}h3{font-size:16px;margin:18px 0 6px;font-weight:700}
+.sub{color:var(--mute);margin:0 0 18px;max-width:60ch}
+/* Tabs — pill */
+nav{display:flex;gap:6px;overflow-x:auto;padding:6px;margin-bottom:20px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);transition:background .45s ease,border-color .45s ease,box-shadow .45s ease;scrollbar-width:thin;scrollbar-color:var(--acc) transparent;-webkit-overflow-scrolling:touch}
+nav::-webkit-scrollbar{height:6px}
+nav::-webkit-scrollbar-track{background:transparent;border-radius:10px}
+nav::-webkit-scrollbar-thumb{background:var(--acc);border-radius:10px;opacity:.7}
+nav button{background:transparent;border:0;color:var(--mute);font:inherit;font-weight:500;padding:9px 16px;cursor:pointer;border-radius:10px;white-space:nowrap;transition:background .25s ease,color .25s ease,transform .2s ease,box-shadow .2s ease;flex-shrink:0}
+nav button:hover{color:var(--ink);background:var(--acc-soft);transform:translateY(-1px)}
+nav button[aria-selected=true]{background:var(--acc);color:var(--acc-ink);font-weight:700;box-shadow:0 2px 12px rgba(214,51,108,.28);transform:none}
+nav button.hidden{display:none}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+section{display:none}section.on{display:block;animation:fadeUp .42s cubic-bezier(0.22,1,0.36,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow);transition:box-shadow .25s ease,background .45s ease,border-color .45s ease,color .45s ease,transform .2s ease}
+.card:hover{box-shadow:0 10px 36px rgba(214,51,108,.12);transform:translateY(-1px)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+label{display:block;font-size:14px;color:var(--mute);font-weight:500}
+input,select,textarea{width:100%;margin-top:5px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit;transition:border-color .15s,box-shadow .15s,background .45s ease,color .45s ease}
+input:hover,select:hover,textarea:hover{border-color:#e8a0b8}
+input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(214,51,108,.12)}
+input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus,textarea:-webkit-autofill,select:-webkit-autofill{
+  -webkit-text-fill-color:var(--ink)!important;
+  -webkit-box-shadow:0 0 0 1000px var(--bg) inset!important;
+  box-shadow:0 0 0 1000px var(--bg) inset!important;
+  caret-color:var(--ink);
+  transition:background-color 9999s ease-in-out 0s;
+}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+.btn{background:var(--acc);color:var(--acc-ink);border:0;border-radius:10px;padding:11px 18px;font:inherit;font-weight:700;cursor:pointer;transition:transform .18s ease,box-shadow .2s ease,filter .18s ease,background .2s ease}
+.btn:hover{filter:brightness(1.07);box-shadow:0 6px 18px rgba(214,51,108,.35);transform:translateY(-2px)}
+.btn:active{transform:scale(.97) translateY(0);box-shadow:0 2px 8px rgba(214,51,108,.25)}
+.btn.sec{background:transparent;color:var(--acc);border:1.5px solid var(--acc)}
+.btn.sec:hover{background:var(--acc-soft);box-shadow:0 4px 14px rgba(214,51,108,.15);filter:none}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--acc-soft);border-color:var(--acc);color:var(--acc);box-shadow:0 4px 12px rgba(214,51,108,.1)}
+.btn.small{padding:6px 12px;font-size:13px;border-radius:8px}
+.btn.small:hover{transform:translateY(-1px)}
+table{width:100%;border-collapse:collapse}td,th{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:15px;vertical-align:middle}
+th{color:var(--mute);font-weight:500;font-size:13px}.scroll{overflow-x:auto}
+td input{max-width:110px;margin:0}
+.b{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:99px;font-size:13px;font-weight:700;white-space:nowrap}
+.ok{background:var(--okbg);color:var(--ok)}.lo,.hi{background:var(--warnbg);color:var(--warn)}.cr{background:var(--badbg);color:var(--bad)}
+.chk{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--ink);font-weight:500;cursor:pointer;padding:6px 0}
+.chk input[type=checkbox]{width:18px;height:18px;margin:2px 0 0;accent-color:var(--acc);flex-shrink:0;cursor:pointer}
+.pass-wrap{position:relative}
+.pass-wrap input{padding-right:44px}
+.pass-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--mute);cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.pass-toggle:hover{color:var(--acc);background:var(--acc-soft)}
+.pass-toggle svg{width:20px;height:20px}
+.yn-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.yn-row:last-child{border-bottom:0}
+.yn-row span{font-size:14px;color:var(--ink);flex:1;min-width:0;line-height:1.4}
+.yn-btns{display:flex;gap:6px;flex-shrink:0;align-self:center}
+.yn-btns button{padding:8px 14px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--mute);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;min-width:52px}
+.yn-btns button:hover{border-color:var(--acc);color:var(--acc)}
+.yn-btns button.on-yes{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.yn-btns button.on-no{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+.locked-section{opacity:.45;pointer-events:none;filter:grayscale(.3);transition:opacity .3s,filter .3s}
+.gate-msg{margin:0 0 14px}
+.score-badge{display:block;width:100%;max-width:100%;white-space:normal;line-height:1.4;padding:8px 12px;box-sizing:border-box;text-align:left}
+.big{display:flex;flex-wrap:wrap;gap:22px}.big div{min-width:110px;flex:1 1 100px}.big b{display:block;font-size:clamp(24px,6vw,34px);line-height:1.1;font-weight:800;letter-spacing:-.02em}.big span{color:var(--mute);font-size:14px}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%}
+.note{font-size:13px;color:var(--mute)}.msg{color:var(--warn);background:var(--warnbg);padding:10px 14px;border-radius:10px;margin:10px 0;font-size:14px}
+ul{padding-left:20px;margin:6px 0}
+/* Hero */
+.hero{background:linear-gradient(145deg,#0D0509 0%,#1a0a12 50%,#2a0f1c 100%);border-radius:20px;padding:26px 24px;margin-bottom:20px;position:relative;overflow:hidden;box-shadow:0 12px 40px rgba(13,5,9,.35)}
+.hero::before{content:'';position:absolute;top:-40%;right:-10%;width:280px;height:280px;background:radial-gradient(circle,rgba(255,143,184,.25),transparent 70%);pointer-events:none}
+.hero h1{margin-top:0;background:linear-gradient(135deg,#FF8FB8,#FFD6E5 60%,#fff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .sub{color:#FFD6E5;margin-bottom:12px;opacity:.9}
+.hero .authbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.hero .authbar .who{color:#FFD6E5;font-size:14px;margin-right:auto}
+.hero .authbar .role{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.role.user{background:#4A2A3A;color:#FFD6E5}
+.role.doctor{background:#1F7A4D;color:#fff}
+.role.admin{background:#D6336C;color:#fff}
+/* Theme toggle */
+.theme-btn{width:42px;height:42px;border-radius:50%;border:1.5px solid rgba(255,214,229,.35);background:rgba(255,255,255,.08);color:#FFD6E5;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;transition:background .25s,transform .2s,border-color .25s}
+.theme-btn:hover{background:rgba(255,255,255,.15);border-color:rgba(255,214,229,.6);transform:scale(1.06)}
+.theme-btn:active{transform:scale(.94)}
+.theme-btn svg{width:20px;height:20px;position:absolute;transition:opacity .35s ease,transform .45s cubic-bezier(.34,1.4,.64,1)}
+.theme-btn .icon-moon{opacity:1;transform:rotate(0) scale(1)}
+.theme-btn .icon-sun{opacity:0;transform:rotate(-90deg) scale(.5)}
+:root[data-theme="dark"] .theme-btn .icon-sun{opacity:1;transform:rotate(0) scale(1)}
+:root[data-theme="dark"] .theme-btn .icon-moon{opacity:0;transform:rotate(90deg) scale(.5)}
+:root[data-theme="light"] .theme-btn .icon-sun{opacity:0;transform:rotate(-90deg) scale(.5)}
+:root[data-theme="light"] .theme-btn .icon-moon{opacity:1;transform:rotate(0) scale(1)}
+html.theme-dark .theme-btn .icon-sun{opacity:1;transform:rotate(0) scale(1)}
+html.theme-dark .theme-btn .icon-moon{opacity:0;transform:rotate(90deg) scale(.5)}
+html.theme-light .theme-btn .icon-sun{opacity:0;transform:rotate(-90deg) scale(.5)}
+html.theme-light .theme-btn .icon-moon{opacity:1;transform:rotate(0) scale(1)}
+
+.theme-btn.spin{animation:themeSpin .5s cubic-bezier(.34,1.2,.64,1)}
+@keyframes themeSpin{0%{transform:scale(1) rotate(0)}40%{transform:scale(.88) rotate(-20deg)}100%{transform:scale(1) rotate(0)}}
+.theme-flash{position:fixed;inset:0;pointer-events:none;z-index:100;background:var(--bg);opacity:0;transition:opacity .15s ease}
+textarea{min-height:90px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;backdrop-filter:blur(4px)}
+.modal.on{display:flex}
+.modal .box{background:var(--card);border-radius:var(--radius);padding:24px;max-width:400px;width:100%;border:1px solid var(--line);position:relative;box-shadow:0 20px 50px rgba(0,0,0,.2);animation:fadeUp .25s ease}
+.modal .row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.modal .err{color:var(--bad);font-size:14px;margin-top:8px;min-height:18px}
+.close{position:absolute;top:12px;right:14px;background:none;border:0;color:var(--mute);font-size:22px;cursor:pointer;line-height:1}
+.link{background:none;border:0;color:var(--acc);cursor:pointer;font:inherit;padding:0;text-decoration:underline;font-size:14px;margin-top:8px}
+.lock{text-align:center;padding:48px 24px;color:var(--mute)}
+.pass-head{background:linear-gradient(135deg,#D6336C,#b02858);color:#fff;border-radius:14px 14px 0 0;padding:18px 20px;margin:-20px -20px 18px}
+.pass-head h2{color:#fff;margin:0;font-size:22px}
+.pass-head .note{color:rgba(255,255,255,.85)}
+/* Mobile */
+@media (max-width:640px){
+  /* легкая прокрутка: без blur, теней, анимаций */
+  .bg-blobs{display:none!important}
+  *{-webkit-tap-highlight-color:transparent;animation:none!important}
+  body,html,.card,nav,.btn,input,select,textarea,.theme-btn,.yn-btns button,.modal .box{
+    transition:none!important;
+  }
+  html,body{
+    -webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
+    overscroll-behavior-y:contain;
+    scroll-behavior:auto!important;
+  }
+  .wrap{padding:10px 10px 40px}
+  .hero{
+    padding:16px 14px;border-radius:14px;margin-bottom:12px;
+    box-shadow:none!important;
+  }
+  .hero::before{display:none!important}
+  .hero h1{font-size:clamp(22px,7vw,30px)}
+  .hero .sub{font-size:13px;margin-bottom:8px}
+  .hero .authbar{gap:6px}
+  .hero .authbar .who{font-size:13px;width:100%;margin-right:0;margin-bottom:4px}
+  nav{
+    padding:4px;gap:4px;margin-bottom:12px;
+    box-shadow:none!important;
+    position:-webkit-sticky;position:sticky;top:0;z-index:5;
+  }
+  nav button{padding:8px 12px;font-size:14px}
+  nav button:hover,nav button:active{transform:none}
+  .card{
+    padding:12px;border-radius:12px;margin-bottom:10px;
+    box-shadow:none!important;
+    transform:none!important;
+    content-visibility:auto;
+    contain-intrinsic-size:auto 200px;
+  }
+  .card:hover{transform:none!important;box-shadow:none!important}
+  section.on{animation:none!important}
+  .grid{grid-template-columns:1fr;gap:10px}
+  h2{font-size:17px;margin:0 0 8px}
+  h3{font-size:14px;margin:12px 0 6px}
+  .yn-row{flex-direction:column;align-items:stretch;gap:8px;padding:10px 0}
+  .yn-btns{width:100%;display:grid;grid-template-columns:1fr 1fr}
+  .yn-btns button{padding:10px 12px;width:100%}
+  .score-badge,.b{white-space:normal!important;max-width:100%;line-height:1.35}
+  #sleepScore .b,#jetlagOut .b,#breathOut .b,#sitOut .b,#stressOut .b{display:block;width:100%;box-sizing:border-box}
+  .big{gap:10px}
+  .big div{min-width:calc(50% - 8px)}
+  .big b{font-size:26px}
+  .modal{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  .modal .box{padding:16px;max-width:100%;box-shadow:none!important;animation:none!important}
+  .btn{padding:12px 16px}
+  .btn:hover,.btn:active{transform:none!important;filter:none!important}
+  table{font-size:13px}
+  td,th{padding:8px 4px}
+  td input{max-width:90px}
+  .scroll{-webkit-overflow-scrolling:touch;overflow-x:auto;overscroll-behavior-x:contain}
+  input,select,textarea{font-size:16px;box-shadow:none!important}
+  .locked-section{filter:none;opacity:.5}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+@media (min-width:641px) and (max-width:900px){
+  .wrap{padding:16px 16px 48px}
+  .grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+}
+#printSheet{display:none}
+@media print{
+  body *{visibility:hidden!important}
+  #printSheet,#printSheet *{visibility:visible!important}
+  #printSheet{display:block!important;position:absolute;left:0;top:0;width:100%;padding:12mm;background:#fff;color:#000}
+  nav,.btn,.no-print,.bg-blobs,.theme-btn,.hero,.wrap,.modal{display:none!important}
+  body{background:#fff;color:#000;margin:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="bg-blobs" aria-hidden="true">
+  <div class="bg-blob"></div>
+  <div class="bg-blob"></div>
+  <div class="bg-blob"></div>
+</div>
+<div class="wrap">
+<div class="hero">
+  <h1>Паспорт здоровья</h1>
+  <p class="sub">Проверьте анализы, заполните анкету, рассчитайте КБЖУ и получите краткий паспорт. Сервис не является медицинским и не ставит диагнозов.</p>
+  <div class="authbar no-print" id="authbar"></div>
+</div>
+
+<div id="locked" class="lock card">
+  <p>Войдите или зарегистрируйтесь, чтобы вести анкеты, анализы и паспорта здоровья.</p>
+</div>
+
+<div id="app" style="display:none">
+<nav role="tablist" class="no-print" id="tabs">
+<button role="tab" data-t="profile" aria-selected="true">Анкета</button>
+<button role="tab" data-t="labs" aria-selected="false">Анализы</button>
+<button role="tab" data-t="kbzhu" aria-selected="false">Цели и КБЖУ</button>
+<button role="tab" data-t="compare" aria-selected="false">Сравнение</button>
+<button role="tab" data-t="passport" aria-selected="false">Паспорт</button>
+<button role="tab" data-t="patients" aria-selected="false" id="tabPatients" class="hidden">Пациенты</button>
+<button role="tab" data-t="admin" aria-selected="false" id="tabAdmin" class="hidden">Админ</button>
+</nav>
+
+<section id="profile" class="on">
+<div class="card"><h2>Мои анкеты</h2>
+<p class="note" style="margin:0 0 12px">Изменения в анкете сохраняются автоматически.</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<select id="qList" style="max-width:280px"></select>
+<button class="btn small" id="qNew">Новая анкета</button>
+<button class="btn small sec" id="qDel">Удалить</button>
+</div>
+<label style="margin-top:10px">Название анкеты<input id="qLabel" placeholder="например, До диеты"></label>
+</div>
+
+<div class="card" id="selfCard">
+<h2>Самодиагностика</h2>
+<p class="sub" style="margin-bottom:14px">Без оборудования. Эти тесты — основа паспорта. Сначала заполните их — дальше откроется остальная анкета.</p>
+<div id="gateMsg" class="msg gate-msg" style="display:none">Чтобы продолжить, ответьте на все пункты самодиагностики.</div>
+
+<h3>1. Индекс регулярности сна</h3>
+<p class="note">Выберите «Да» или «Нет» для каждого пункта:</p>
+<div id="sleepQs" style="margin-bottom:8px">
+<div class="yn-row" data-q="sleep1"><span>Ложишься и встаёшь примерно в одно время (±30 мин) и в будни, и в выходные?</span><div class="yn-btns"><button type="button" data-v="1">Да</button><button type="button" data-v="0">Нет</button></div></div>
+<div class="yn-row" data-q="sleep2"><span>Засыпаешь обычно за 15–20 минут?</span><div class="yn-btns"><button type="button" data-v="1">Да</button><button type="button" data-v="0">Нет</button></div></div>
+<div class="yn-row" data-q="sleep3"><span>Просыпаешься без будильника хотя бы 3 раза в неделю?</span><div class="yn-btns"><button type="button" data-v="1">Да</button><button type="button" data-v="0">Нет</button></div></div>
+<div class="yn-row" data-q="sleep4"><span>Нет дневной сонливости, которая мешает учёбе или работе?</span><div class="yn-btns"><button type="button" data-v="1">Да</button><button type="button" data-v="0">Нет</button></div></div>
+<div class="yn-row" data-q="sleep5"><span>Не пользуешься телефоном в постели дольше 15 минут?</span><div class="yn-btns"><button type="button" data-v="1">Да</button><button type="button" data-v="0">Нет</button></div></div>
+</div>
+<div id="sleepScore" class="note" style="margin-bottom:16px"></div>
+
+<h3>2. Пищевой джетлаг</h3>
+<p class="note">Во сколько обычно едите первый раз?</p>
+<div class="grid">
+<label>В будни<input id="mealWD" type="time"></label>
+<label>В выходные<input id="mealWE" type="time"></label>
+</div>
+<div id="jetlagOut" class="note" style="margin:8px 0 16px"></div>
+
+<h3>3. Дыхание: задержка на выдохе</h3>
+<p class="note">Задержите дыхание после нормального выдоха. Тест толерантности к CO₂.</p>
+<label>Секунды<input id="breathHold" type="number" min="5" max="120" placeholder="например, 25"></label>
+<div id="breathOut" class="note" style="margin:8px 0 16px"></div>
+
+<h3>4. Тест «Сесть–Встать»</h3>
+<p class="note">Стул. Руки скрещены на груди. Сесть и встать 5 раз максимально быстро.</p>
+<label>Время, секунды<input id="sitStand" type="number" min="5" max="60" step="0.1" placeholder="например, 10"></label>
+<div id="sitOut" class="note" style="margin:8px 0 16px"></div>
+
+<h3>5. Шкала стресса</h3>
+<p class="note">За последние 2 недели: чувствовал(а) ли ты, что не можешь контролировать важные вещи в жизни?</p>
+<label>Как часто<select id="stressFreq">
+<option value="">Не выбрано</option>
+<option value="0">Почти никогда</option>
+<option value="1">Редко (1–2 раза)</option>
+<option value="2">Иногда (2–4 раза за 2 недели)</option>
+<option value="3">Часто (3–4 раза в неделю)</option>
+<option value="4">Очень часто / почти каждый день</option>
+</select></label>
+<div id="stressOut" class="note" style="margin:8px 0 0"></div>
+</div>
+
+<div id="restProfile">
+<div class="card"><h2>О вас</h2><div class="grid">
+<label>Имя<input id="name" autocomplete="name" placeholder="например, Анна"></label>
+<label>Пол<select id="sex"><option value="f">Женский</option><option value="m">Мужской</option></select></label>
+<label>Дата рождения<input id="dob" type="date"></label>
+<label>Рост, см<input id="h" type="number" min="100" max="230" placeholder="например, 165"></label>
+<label>Вес, кг<input id="w" type="number" min="30" max="250" step="0.1" placeholder="например, 62.5"></label>
+</div></div>
+
+<div class="card"><h2>Образ жизни</h2><div class="grid">
+<label>Физическая активность<select id="act"><option value="1.2">Сидячий (мало ходьбы, &lt;10 000 шагов)</option><option value="1.375" selected>Базовый: 1–3 тренировки в неделю</option><option value="1.55">3–5 тренировок в неделю по ~1 часу</option><option value="1.725">Активный: 5+ тренировок в неделю</option></select></label>
+<label>Тип питания<select id="diet"><option>Без ограничений</option><option>Вегетарианское</option><option>Веганское</option><option>Кето</option><option>Халяль</option><option>Кошер</option></select></label>
+<label>Аллергии и непереносимости<input id="allergy" placeholder="например, лактоза, глютен, орехи"></label>
+<label>Сон, часов в сутки<input id="sleep" type="number" min="2" max="14" step="0.5" placeholder="например, 7.5"></label>
+<label>Курение<select id="smoke"><option value="0">Нет</option><option value="1">Да</option></select></label>
+</div></div>
+
+<div id="extra"></div>
+</div>
+</section>
+
+<section id="labs"><div class="card"><h2>Проверка анализов</h2>
+<p class="sub">Введите значения — статус появится сразу. Референсы подобраны по полу и возрасту из анкеты.</p>
+<div class="no-print" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+<button class="btn" id="labSave">Сохранить</button>
+<span class="note" id="impmsg">Значения сохраняются в анкету</span>
+</div>
+<div id="labmsg"></div>
+<div class="scroll"><table><thead><tr><th>Показатель</th><th>Значение</th><th>Ед.</th><th>Норма</th><th>Статус</th></tr></thead><tbody id="labrows"></tbody></table></div>
+</div></section>
+
+<section id="kbzhu"><div class="card"><h2>Цель</h2><div class="grid">
+<label>Что хотите<select id="goal"><option value="">Не выбрано</option><option value="lose">Снизить вес</option><option value="maintain">Удерживать вес</option><option value="gain">Набрать вес</option></select></label>
+<label>Желаемый вес, кг<input id="tw" type="number" min="30" max="250" step="0.1" placeholder="например, 58"></label>
+<label>Срок, недель<input id="weeks" type="number" min="4" max="104" placeholder="например, 12"></label>
+<label>Жир сейчас, %<input id="bf" type="number" min="3" max="60" placeholder="например, 28"></label>
+<label>Жир желаемый, %<input id="tbf" type="number" min="3" max="60" placeholder="например, 22"></label>
+<label>Мышцы, цель<input id="mus" placeholder="например, +2 кг сухой массы"></label>
+<label>Спортивная цель<select id="sport"><option>Не выбрана</option><option>Сила</option><option>Выносливость</option><option>Гибкость</option><option>Восстановление</option></select></label>
+</div></div><div id="kres"></div></section>
+
+<section id="compare"><div class="card"><h2>Сравнение анкет</h2>
+<div class="grid">
+<label>Анкета А<select id="cmpA"></select></label>
+<label>Анкета Б<select id="cmpB"></select></label>
+</div>
+<div id="cmpOut" style="margin-top:14px"></div>
+</div></section>
+
+<section id="passport"><div id="pres"></div></section>
+
+<section id="patients"><div class="card"><h2>Пациенты</h2>
+<div id="patList"><p class="note">Загрузка…</p></div>
+<div id="patView"></div>
+</div></section>
+
+<section id="admin"><div class="card"><h2>Пользователи</h2>
+<div id="adminMsg"></div>
+<div id="adminList"><p class="note">Загрузка…</p></div>
+</div>
+<div class="card"><h2>Статистика</h2><div id="adminStats"><p class="note">Загрузка…</p></div></div>
+</section>
+</div>
+</div>
+
+<div class="modal" id="mLogin"><div class="box">
+<button class="close" data-close>&times;</button>
+<h2>Вход</h2>
+<label>Email<input id="loginEmail" type="email" autocomplete="email"></label>
+<label>Пароль
+  <div class="pass-wrap">
+    <input id="loginPass" type="password" autocomplete="current-password">
+    <button type="button" class="pass-toggle" data-toggle="loginPass" aria-label="Показать пароль" title="Показать пароль">
+      <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+    </button>
+  </div>
+</label>
+<div class="err" id="loginErr"></div>
+<div class="row"><button class="btn" id="doLogin">Войти</button><button class="btn ghost" data-close>Отмена</button></div>
+<button class="link" id="forgot">Забыли пароль?</button>
+</div></div>
+
+<div class="modal" id="mSignup"><div class="box">
+<button class="close" data-close>&times;</button>
+<h2>Регистрация</h2>
+<label>Email<input id="suEmail" type="email" autocomplete="email"></label>
+<label>Пароль (минимум 6 символов)
+  <div class="pass-wrap">
+    <input id="suPass" type="password" autocomplete="new-password">
+    <button type="button" class="pass-toggle" data-toggle="suPass" aria-label="Показать пароль" title="Показать пароль">
+      <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+    </button>
+  </div>
+</label>
+<div class="err" id="suErr"></div>
+<div class="row"><button class="btn" id="doSignup">Зарегистрироваться</button><button class="btn ghost" data-close>Отмена</button></div>
+</div></div>
+
+<script>
+const SUPABASE_URL='https://zhgsenrxemunzcuqjcut.supabase.co';
+const SUPABASE_KEY='sb_publishable_Uc8_rEj09jF2NjJBksjs7w_8Ut1bHLN';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const $=id=>document.getElementById(id);
+const IDS=['name','sex','dob','h','w','waist','act','diet','allergy','sleep','smoke','goal','tw','weeks','bf','tbf','mus','sport','mealWD','mealWE','breathHold','sitStand','stressFreq','sleep1','sleep2','sleep3','sleep4','sleep5'];
+const LABS=[
+{n:'Гемоглобин',u:'г/л',r:(s,a)=>a<18?[115,150]:s=='m'?[130,160]:[120,150]},
+{n:'Глюкоза натощак',u:'ммоль/л',r:()=>[3.9,5.9]},
+{n:'Холестерин общий',u:'ммоль/л',r:()=>[null,5.2]},
+{n:'ЛПНП',u:'ммоль/л',r:()=>[null,3.0]},
+{n:'ЛПВП',u:'ммоль/л',r:s=>[s=='m'?1.0:1.2,null]},
+{n:'Триглицериды',u:'ммоль/л',r:()=>[null,1.7]},
+{n:'Ферритин',u:'мкг/л',r:s=>s=='m'?[30,400]:[13,150]},
+{n:'ТТГ',u:'мЕд/л',r:()=>[0.4,4.0]},
+{n:'Витамин D (25-OH)',u:'нг/мл',r:()=>[30,100]},
+{n:'АЛТ',u:'Ед/л',r:s=>[null,s=='m'?41:33]},
+{n:'Лейкоциты',u:'×10⁹/л',r:()=>[4,9]},
+{n:'Тромбоциты',u:'×10⁹/л',r:()=>[150,400]},
+{n:'СОЭ',u:'мм/ч',r:s=>[null,s=='m'?15:20]},
+{n:'Железо',u:'мкмоль/л',r:s=>s=='m'?[11,28]:[9,30]},
+{n:'Витамин B12',u:'пг/мл',r:()=>[200,900]},
+{n:'Креатинин',u:'мкмоль/л',r:s=>s=='m'?[62,106]:[44,80]},
+{n:'Билирубин общий',u:'мкмоль/л',r:()=>[5,21]},
+{n:'Кальций',u:'ммоль/л',r:()=>[2.15,2.55]}
+];
+const SY={'Кроветворная':['Гемоглобин','Тромбоциты','Ферритин','Железо','Витамин B12'],'Иммунная и костная':['Лейкоциты','СОЭ','Витамин D (25-OH)','Кальций'],'Эндокринная':['Глюкоза натощак','ТТГ'],'Сердечно-сосудистая':['Холестерин общий','ЛПНП','ЛПВП','Триглицериды'],'Печень и почки':['АЛТ','Билирубин общий','Креатинин']};
+LABS.forEach(l=>l.sys=Object.keys(SY).find(k=>SY[k].includes(l.n))||'Прочее');
+
+const LBL={ok:'✓ Норма',lo:'↓ Ниже нормы',hi:'↑ Выше нормы',cr:'! Критично: к врачу'};
+const S={};
+let CURRENT_USER=null;
+let ROLE='user';
+let CURRENT_QID=null;
+let QLIST=[];
+
+function val(k){return numVal(S[k])}
+function age(){if(!S.dob)return null;const d=new Date(S.dob),n=new Date();let a=n.getFullYear()-d.getFullYear();if(n<new Date(n.getFullYear(),d.getMonth(),d.getDate()))a--;return a}
+function status(v,[lo,hi]){
+ if(v==null||v===''||isNaN(v))return null;
+ if(lo!=null&&v<lo)return v<lo*0.75?'cr':'lo';
+ if(hi!=null&&v>hi)return v>hi*1.5?'cr':'hi';
+ return'ok'}
+function numVal(x){
+ if(x==null||x==='')return NaN;
+ if(typeof x==='number')return x;
+ return parseFloat(String(x).replace(',','.').trim());
+}
+function refText([lo,hi]){return lo!=null&&hi!=null?lo+'–'+hi:lo!=null?'≥ '+lo:'≤ '+hi}
+
+function sleepScore(){
+  let sc=0;
+  for(let i=1;i<=5;i++) if(S['sleep'+i]==='1') sc++;
+  return sc;
+}
+function selfTestsDone(){
+  for(let i=1;i<=5;i++) if(S['sleep'+i]!=='0'&&S['sleep'+i]!=='1') return false;
+  if(!S.mealWD||!S.mealWE) return false;
+  if(!S.breathHold||isNaN(parseFloat(S.breathHold))) return false;
+  if(!S.sitStand||isNaN(parseFloat(S.sitStand))) return false;
+  if(S.stressFreq===''||S.stressFreq==null) return false;
+  return true;
+}
+function applyGate(){
+  // админ и врач — без блокировки (самодиагностика только для обычных пользователей)
+  const staff=ROLE==='admin'||ROLE==='doctor';
+  const done=staff||selfTestsDone();
+  const rest=$('restProfile');
+  if(rest) rest.classList.toggle('locked-section',!done);
+  const gm=$('gateMsg');
+  if(gm){
+    if(staff) gm.style.display='none';
+    else gm.style.display=done?'none':'block';
+  }
+  document.querySelectorAll('nav button').forEach(b=>{
+    if(b.dataset.t==='profile') return;
+    if(staff){
+      b.disabled=false;
+      b.style.opacity='';
+      b.style.pointerEvents='';
+      return;
+    }
+    b.disabled=!done;
+    b.style.opacity=done?'':'0.45';
+    b.style.pointerEvents=done?'':'none';
+  });
+}
+function syncYnButtons(){
+  document.querySelectorAll('.yn-row').forEach(row=>{
+    const q=row.dataset.q;
+    const v=S[q];
+    row.querySelectorAll('button').forEach(btn=>{
+      btn.classList.remove('on-yes','on-no');
+      if(v==='1'&&btn.dataset.v==='1') btn.classList.add('on-yes');
+      if(v==='0'&&btn.dataset.v==='0') btn.classList.add('on-no');
+    });
+  });
+}
+function jetlagHours(){
+  const a=S.mealWD,b=S.mealWE;
+  if(!a||!b) return null;
+  const [ah,am]=a.split(':').map(Number),[bh,bm]=b.split(':').map(Number);
+  let d=Math.abs((ah*60+am)-(bh*60+bm))/60;
+  if(d>12) d=24-d;
+  return d;
+}
+function updSelfTests(){
+  syncYnButtons();
+  // sleep
+  const answered=[1,2,3,4,5].every(i=>S['sleep'+i]==='0'||S['sleep'+i]==='1');
+  const sc=sleepScore();
+  const sleepEl=$('sleepScore');
+  if(sleepEl){
+    if(!answered) sleepEl.innerHTML='<span class="note">Ответьте на все 5 вопросов</span>';
+    else {
+      let cls='ok',txt=`Балл: ${sc}/5 — зелёная зона`;
+      if(sc<=2){cls='cr';txt=`Балл: ${sc}/5 — красная зона. Паспорт уже сигналит`}
+      else if(sc<=4){cls='hi';txt=`Балл: ${sc}/5 — жёлтая зона`}
+      sleepEl.innerHTML=`<span class="b score-badge ${cls}">${txt}</span>`;
+    }
+  }
+  // jetlag
+  const jh=jetlagHours();
+  const jetEl=$('jetlagOut');
+  if(jetEl){
+    if(jh==null) jetEl.textContent='Укажите оба времени';
+    else if(jh>2) jetEl.innerHTML=`<span class="b score-badge hi">Разница ${jh.toFixed(1)} ч — пищевой джетлаг (риск повышения ИМТ)</span>`;
+    else jetEl.innerHTML=`<span class="b score-badge ok">Разница ${jh.toFixed(1)} ч — в норме</span>`;
+  }
+  // breath
+  const bh=val('breathHold');
+  const brEl=$('breathOut');
+  if(brEl){
+    if(isNaN(bh)) brEl.textContent='Введите результат в секундах';
+    else if(bh<20) brEl.innerHTML=`<span class="b cr">${bh} сек — низкая толерантность к CO₂, поверхностное дыхание, риск тревоги и нарушений сна</span>`;
+    else if(bh<=40) brEl.innerHTML=`<span class="b hi">${bh} сек — средняя толерантность</span>`;
+    else brEl.innerHTML=`<span class="b ok">${bh} сек — хорошая толерантность</span>`;
+  }
+  // sit-stand
+  const ss=val('sitStand');
+  const ssEl=$('sitOut');
+  if(ssEl){
+    if(isNaN(ss)) ssEl.textContent='Введите время в секундах';
+    else if(ss>12) ssEl.innerHTML=`<span class="b cr">${ss} сек — слабость нижних конечностей, повышенный риск метаболических нарушений</span>`;
+    else ssEl.innerHTML=`<span class="b ok">${ss} сек — норма</span>`;
+  }
+  // stress
+  const sf=S.stressFreq;
+  const stEl=$('stressOut');
+  if(stEl){
+    if(sf===''||sf==null) stEl.textContent='Выберите частоту';
+    else if(sf>='3') stEl.innerHTML=`<span class="b cr">Красная зона — высокая стресс-нагрузка. Хронический стресс нарушает сон и повышает кортизол</span>`;
+    else if(sf==='2') stEl.innerHTML=`<span class="b hi">Жёлтая зона — средний уровень</span>`;
+    else stEl.innerHTML=`<span class="b ok">Зелёная зона — нормальный уровень</span>`;
+  }
+  applyGate();
+}
+function todayStr(){return new Date().toLocaleDateString('ru-RU')}
+
+function buildLabs(){
+ $('labrows').innerHTML=LABS.map((l,i)=>`<tr><td>${l.n}</td><td><input type="number" step="any" data-lab="${i}" aria-label="${l.n}" placeholder="введите значение" value="${S['lab'+i]??''}"></td><td>${l.u}</td><td id="ref${i}"></td><td id="st${i}"></td></tr>`).join('');
+ document.querySelectorAll('[data-lab]').forEach(e=>{
+   const onLab=()=>{S['lab'+e.dataset.lab]=e.value.replace(',','.');autoSave();updLabs()};
+   e.addEventListener('input',onLab);
+   e.addEventListener('change',onLab);
+ });
+ updLabs()}
+function labResults(){const s=S.sex||'f',a=age()??30;return LABS.map((l,i)=>{const r=l.r(s,a),v=numVal(S['lab'+i]);return{...l,r,v,st:status(v,r)}})}
+function updLabs(){
+ $('labmsg').innerHTML=(age()==null)?'<div class="msg">Укажите дату рождения в анкете — нормы зависят от возраста.</div>':'';
+ labResults().forEach((l,i)=>{
+   const refEl=$('ref'+i),stEl=$('st'+i);
+   if(refEl) refEl.textContent=refText(l.r);
+   if(stEl) stEl.innerHTML=l.st?`<span class="b ${l.st}">${LBL[l.st]}</span>`:'—';
+ });
+}
+function calc(){
+ const w=val('w'),h=val('h'),a=age();
+ if(!w||!h||a==null)return null;
+ const m=S.sex=='m';
+ // Всегда Миффлин — Сан Жеор
+ const bmr=10*w+6.25*h-5*a+(m?5:-161);
+ const tdee=bmr*parseFloat(S.act||1.375);
+ let delta=0,note='';const goal=S.goal||'maintain',tw=val('tw'),wk=val('weeks')||12;
+ if(a<18&&goal!='maintain'){note='До 18 лет калорийность не корректируем.'}
+ else if(goal!='maintain'&&tw){
+  const need=(tw-w)*7700/(wk*7);
+  if(goal=='lose'&&need<0)delta=Math.max(need,-0.2*tdee);
+  else if(goal=='gain'&&need>0)delta=Math.min(need,0.15*tdee);
+  else note='Желаемый вес не совпадает с целью — считаем поддержание.';}
+ let kcal=tdee+delta;const floor=m?1500:1200;
+ if(kcal<floor){kcal=floor;note='Калорийность не ниже '+floor+' ккал.'}
+ const p=w*(goal=='lose'?2.0:goal=='gain'?1.8:1.7),f=Math.max(w*0.8,w*0.9),c=Math.max(0,(kcal-p*4-f*9)/4);
+ return{bmr,tdee,kcal,p,f,c,water:w*30,bmi:w/Math.pow(h/100,2),delta:kcal-tdee,note}}
+function kview(k){
+ const pc=Math.round(k.p*4/k.kcal*100),fc=Math.round(k.f*9/k.kcal*100),cc=100-pc-fc;
+ return`<div class="big"><div><b>${Math.round(k.kcal)}</b><span>ккал в сутки</span></div><div><b>${Math.round(k.p)} г</b><span>белки, ${pc}%</span></div><div><b>${Math.round(k.f)} г</b><span>жиры, ${fc}%</span></div><div><b>${Math.round(k.c)} г</b><span>углеводы, ${cc}%</span></div><div><b>${(k.water/1000).toFixed(1)} л</b><span>вода</span></div></div>
+ <div class="bar"><i style="width:${pc}%;background:var(--acc)"></i><i style="width:${fc}%;background:var(--warn)"></i><i style="width:${cc}%;background:var(--mute)"></i></div>
+ <p class="note">Основной обмен ${Math.round(k.bmr)} · расход ${Math.round(k.tdee)} ккал · ${k.delta>0?'профицит':k.delta<0?'дефицит':'баланс'} ${Math.abs(Math.round(k.delta))} ккал · формула Миффлин — Сан Жеор</p>${k.note?`<div class="msg">${k.note}</div>`:''}`}
+function markRequired(){
+  ['dob','h','w'].forEach(id=>{
+    const e=$(id); if(!e) return;
+    const empty=!e.value;
+    e.style.borderColor=empty?'var(--bad)':'';
+    e.style.boxShadow=empty?'0 0 0 3px rgba(163,36,27,.12)':'';
+  });
+}
+function updK(){
+  const k=calc();
+  markRequired();
+  if(k){
+    $('kres').innerHTML=`<div class="card"><h2>Результат</h2>${kview(k)}</div>`;
+  } else {
+    const miss=[];
+    if(!S.dob) miss.push('дата рождения');
+    if(!val('h')) miss.push('рост');
+    if(!val('w')) miss.push('вес');
+    $('kres').innerHTML=`<div class="card"><h2>Результат</h2><div class="msg">Чтобы посчитать КБЖУ, заполните в анкете: <b>${miss.join(', ')}</b>.</div></div>`;
+  }
+}
+
+function passport(){
+ // подтянуть значения с формы, если в S ещё пусто (не трогали select)
+ ['diet','act','sport','sex','name','allergy','gym','support','alc','chronic'].forEach(id=>{
+   const e=$(id); if(e&&(S[id]==null||S[id]==='')) S[id]=e.value;
+ });
+ // цель только если пользователь явно выбрал
+ if(!S.goal){const g=$('goal'); if(g&&g.value) S.goal=g.value;}
+ const k=calc(),a=age(),m=S.sex=='m',R=labResults().filter(l=>l.st),bad=R.filter(l=>l.st!='ok'),n=x=>val(x);
+ if(!k){$('pres').innerHTML='<div class="card"><div class="msg">Заполните дату рождения, рост и вес.</div></div>';return}
+ const sc=sleepScore(), jh=jetlagHours(), bh=n('breathHold'), ss=n('sitStand'), sf=S.stressFreq;
+ const risks=[];
+ if(k.bmi>=30)risks.push('ИМТ в диапазоне ожирения');else if(k.bmi>=25)risks.push('Избыточная масса тела');else if(k.bmi<18.5)risks.push('Дефицит массы тела');
+ const wa=n('waist'),hp=n('hips');
+ if(wa&&wa>(m?94:80))risks.push('Талия выше ориентира ('+(m?94:80)+' см)');
+ if(wa&&hp&&wa/hp>(m?0.9:0.85))risks.push('Соотношение талия/бёдра выше ориентира');
+ if(S.smoke=='1')risks.push('Курение');if(S.alc=='Регулярно')risks.push('Регулярный алкоголь');if(n('caf')>4)risks.push('Много кофеина');
+ if(n('sleep')<7)risks.push('Сон меньше 7 часов');
+ if(sc<=2)risks.push('Низкая регулярность сна (красная зона)');
+ if(jh!=null&&jh>2)risks.push('Пищевой джетлаг (>2 ч)');
+ if(!isNaN(bh)&&bh<20)risks.push('Низкая толерантность к CO₂ (задержка дыхания <20 сек)');
+ if(!isNaN(ss)&&ss>12)risks.push('Слабость нижних конечностей (тест сесть-встать >12 сек)');
+ if(sf>='3')risks.push('Высокая стресс-нагрузка');
+ if(S.support=='Нет')risks.push('Нет поддержки близких');if(parseFloat(S.act)<=1.2)risks.push('Низкая активность');
+ if(S.chronic)risks.push('Хронические заболевания: '+S.chronic);
+ const bmiT=k.bmi<18.5?'ниже нормы':k.bmi<25?'норма':k.bmi<30?'избыток массы':'ожирение';
+ const sys={};R.forEach(l=>(sys[l.sys]=sys[l.sys]||[]).push(l));
+ const pf=S.diet=='Веганское'?'тофу, чечевица, нут, орехи':S.diet=='Вегетарианское'?'яйца, творог, бобовые':'рыба, курица, яйца, творог';
+ const M=[['Завтрак',.25],['Обед',.35],['Полдник',.15],['Ужин',.25]];
+ const tr={'Сила':'силовые 3 раза в неделю','Выносливость':'кардио 3–4 раза в неделю','Гибкость':'растяжка/йога 3 раза в неделю','Восстановление':'лёгкая ходьба, сон 8 часов'}[S.sport];
+ const chk=['Терапевт и анализы крови — раз в год','Стоматолог — 2 раза в год'];
+ if(!m&&a>=18)chk.push('Гинеколог — раз в год');if(a>=40)chk.push('ЭКГ и липидограмма — раз в год');
+ const psy=sf>='3'||n('sleep')<7||sc<=2;
+ const zone=(ok,warn,bad,v)=>{if(v===null||v===undefined||v==='')return '—';return v?ok:warn;};
+ const sleepZ=sc<=2?'cr':sc<=4?'hi':'ok';
+ const jetZ=jh==null?'':jh>2?'hi':'ok';
+ const breathZ=isNaN(bh)?'':bh<20?'cr':bh<=40?'hi':'ok';
+ const sitZ=isNaN(ss)?'':ss>12?'cr':'ok';
+ const stressZ=sf===''||sf==null?'':sf>='3'?'cr':sf==='2'?'hi':'ok';
+ $('pres').innerHTML=`<div class="card"><div class="pass-head"><h2>Паспорт здоровья${S.name?': '+S.name:''}</h2><p class="note">Дата: ${todayStr()} · возраст ${a} · ${m?'мужчина':'женщина'}</p></div>
+ <div class="big"><div><b>${k.bmi.toFixed(1)}</b><span>ИМТ, ${bmiT}</span></div><div><b>${Math.round(k.kcal)}</b><span>ккал в сутки</span></div>${wa&&hp?`<div><b>${(wa/hp).toFixed(2)}</b><span>талия/бёдра</span></div>`:''}</div>
+ <h3>Самодиагностика</h3>
+ <ul>
+ <li>Регулярность сна: <span class="b ${sleepZ}">${sc}/5 ${sc<=2?'красная':sc<=4?'жёлтая':'зелёная'} зона</span></li>
+ <li>Пищевой джетлаг: ${jh==null?'не измерен':`<span class="b ${jetZ}">${jh.toFixed(1)} ч ${jh>2?'— есть джетлаг':'— норма'}</span>`}</li>
+ <li>Задержка дыхания: ${isNaN(bh)?'не измерен':`<span class="b ${breathZ}">${bh} сек</span>`}</li>
+ <li>Тест «Сесть–Встать»: ${isNaN(ss)?'не измерен':`<span class="b ${sitZ}">${ss} сек</span>`}</li>
+ <li>Стресс: ${sf===''||sf==null?'не измерен':`<span class="b ${stressZ}">${['почти никогда','редко','иногда','часто','очень часто'][sf]||sf}</span>`}</li>
+ </ul>
+ <h3>Анализы</h3>${R.length?`<ul>${R.map(l=>`<li>${l.n}: ${l.v} ${l.u} <span class="b ${l.st}">${LBL[l.st]}</span></li>`).join('')}</ul>`:'<p class="note">Анализы не введены.</p>'}
+ ${bad.some(l=>l.st=='cr')?'<div class="msg">Есть критические отклонения — консультация врача.</div>':''}
+ <h3>Системы организма</h3>${Object.keys(sys).length?`<ul>${Object.entries(sys).map(([q,ls])=>{const o=ls.filter(l=>l.st!='ok');return`<li><b>${q}:</b> ${o.length?'отклонения — '+o.map(l=>l.n).join(', '):'в норме'}</li>`}).join('')}</ul>`:'<p class="note">Появятся после ввода анализов.</p>'}
+ <h3>Факторы риска</h3>${risks.length?`<ul>${risks.map(r=>`<li>${r}</li>`).join('')}</ul>`:'<p class="note">Значимых факторов не выявлено.</p>'}
+ <h3>Цели</h3><p>${{lose:'Снизить вес',maintain:'Удерживать вес',gain:'Набрать вес'}[S.goal]||'Цель не выбрана'}${S.tw?' до '+S.tw+' кг за '+S.weeks+' нед.':''}${S.bf||S.tbf?`. Жир: ${S.bf||'—'}% → ${S.tbf||'—'}%`:''}${S.mus?`. Мышцы: ${S.mus}`:''}</p>
+ <h3>КБЖУ</h3>${kview(k)}
+ <h3>Карта здоровья</h3>
+ <p><b>Нутрициолог.</b> Питание «${S.diet||'не указано'}», 4–5 приёмов пищи, вода ~${(k.water/1000).toFixed(1)} л. Источники белка: ${pf}.${S.allergy?` Исключить: ${S.allergy}.`:''}${bad.some(l=>/Витамин|Ферритин|Железо/.test(l.n))?' Дефициты — только по назначению врача.':''}${jh!=null&&jh>2?' Старайтесь есть первый приём пищи примерно в одно время в будни и выходные.':''}</p>
+ <div class="scroll"><table><thead><tr><th>Меню на день</th><th>ккал</th><th>белок</th></tr></thead><tbody>${M.map(x=>`<tr><td>${x[0]}</td><td>${Math.round(k.kcal*x[1])}</td><td>${Math.round(k.p*x[1])} г</td></tr>`).join('')}</tbody></table></div>
+ <p><b>Психолог / сон.</b> ${psy?'Медленное дыхание 6 вдохов/мин перед сном (5 мин), постоянное время отбоя ±30 мин, утренний свет в первые 30–60 мин, экраны выключать за час до сна.':'Сохраняйте регулярность сна (ложиться и вставать примерно в одно время) и режим отдыха.'}${!isNaN(bh)&&bh<20?' Практика задержки дыхания поможет повысить толерантность к CO₂.':''}</p>
+ <p><b>Тренер.</b> ${parseFloat(S.act)<=1.2?'Ходьба 30 минут 4 раза в неделю + 2 силовые (присед, тяга, жим).':'2–3 силовые и 1–2 кардио в неделю, 7000–10000 шагов/день.'}${tr?' Цель: '+tr+'.':''}${S.gym=='Нет'?' Без зала — вес тела и резинки.':''}${!isNaN(ss)&&ss>12?' Укрепите ноги: приседания и подъёмы.':''}</p>
+ <p><b>Общее.</b> Профилактика: ${chk.join('; ')}. Вакцинация: грипп ежегодно, АДС раз в 10 лет.</p>
+ <p class="note">Сервис не является медицинским диагностическим инструментом.</p>
+ <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+ <button class="btn" id="btnPdf">Скачать PDF</button>
+ <button class="btn sec" id="btnPrint">Печать</button>
+ </div></div>`;
+ $('btnPdf').onclick=downloadPassportPdf;const bp=$('btnPrint');if(bp)bp.onclick=printPassport}
+
+function buildPassportDocHtml(){
+ // синхронизация полей
+ ['diet','act','sport','sex','name','allergy','gym','support','alc','chronic'].forEach(id=>{
+   const e=$(id); if(e&&(S[id]==null||S[id]==='')) S[id]=e.value;
+ });
+ if(!S.goal){const g=$('goal'); if(g&&g.value) S.goal=g.value;}
+ const k=calc(),a=age(),m=S.sex=='m',n=x=>val(x);
+ if(!k) return null;
+ const R=labResults().filter(l=>l.st),bad=R.filter(l=>l.st!='ok');
+ const sc=sleepScore(),jh=jetlagHours(),bh=n('breathHold'),ss=n('sitStand'),sf=S.stressFreq;
+ const risks=[];
+ if(k.bmi>=30)risks.push('ИМТ в диапазоне ожирения');else if(k.bmi>=25)risks.push('Избыточная масса тела');else if(k.bmi<18.5)risks.push('Дефицит массы тела');
+ const wa=n('waist'),hp=n('hips');
+ if(wa&&wa>(m?94:80))risks.push('Талия выше ориентира ('+(m?94:80)+' см)');
+ if(wa&&hp&&wa/hp>(m?0.9:0.85))risks.push('Соотношение талия/бёдра выше ориентира');
+ if(S.smoke=='1')risks.push('Курение');if(S.alc=='Регулярно')risks.push('Регулярный алкоголь');if(n('caf')>4)risks.push('Много кофеина');
+ if(n('sleep')<7)risks.push('Сон меньше 7 часов');
+ if(sc<=2)risks.push('Низкая регулярность сна');
+ if(jh!=null&&jh>2)risks.push('Пищевой джетлаг');
+ if(!isNaN(bh)&&bh<20)risks.push('Низкая толерантность к CO₂');
+ if(!isNaN(ss)&&ss>12)risks.push('Слабость нижних конечностей');
+ if(sf>='3')risks.push('Высокая стресс-нагрузка');
+ if(S.support=='Нет')risks.push('Нет поддержки близких');if(parseFloat(S.act)<=1.2)risks.push('Низкая активность');
+ if(S.chronic)risks.push('Хронические заболевания: '+S.chronic);
+ const bmiT=k.bmi<18.5?'ниже нормы':k.bmi<25?'норма':k.bmi<30?'избыток массы':'ожирение';
+ const goalTxt={lose:'Снизить вес',maintain:'Удерживать вес',gain:'Набрать вес'}[S.goal]||'Цель не выбрана';
+ const stressTxt=['почти никогда','редко','иногда','часто','очень часто'][sf]||'не указано';
+ const pf=S.diet=='Веганское'?'тофу, чечевица, нут, орехи':S.diet=='Вегетарианское'?'яйца, творог, бобовые':'рыба, курица, яйца, творог';
+ const tr={'Сила':'силовые 3 раза в неделю','Выносливость':'кардио 3–4 раза в неделю','Гибкость':'растяжка/йога 3 раза в неделю','Восстановление':'лёгкая ходьба, сон 8 часов'}[S.sport];
+ const block=(title,body)=>`<div style="margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid #D6336C;font-size:14px;font-weight:700;color:#D6336C">${title}</div><div style="font-size:13px;line-height:1.55;color:#222">${body}</div>`;
+ const li=items=>items.length?`<ul style="margin:6px 0;padding-left:18px">${items.map(x=>`<li style="margin:3px 0">${x}</li>`).join('')}</ul>`:'<p style="color:#666">—</p>';
+ const M=[['Завтрак',.25],['Обед',.35],['Полдник',.15],['Ужин',.25]];
+ const menuRows=M.map(x=>`<tr><td style="padding:4px 6px;border-bottom:1px solid #eee">${x[0]}</td><td style="padding:4px 6px;border-bottom:1px solid #eee">${Math.round(k.kcal*x[1])}</td><td style="padding:4px 6px;border-bottom:1px solid #eee">${Math.round(k.p*x[1])} г</td></tr>`).join('');
+ const html=`<div style="font-family:Arial,Helvetica,sans-serif;color:#222;background:#fff;padding:0;margin:0;max-width:700px;box-sizing:border-box;text-align:left">
+  <div style="background:#D6336C;color:#fff;padding:16px 18px;border-radius:10px;margin-bottom:16px">
+    <div style="font-size:20px;font-weight:700">Паспорт здоровья${S.name?': '+S.name:''}</div>
+    <div style="font-size:12px;opacity:.9;margin-top:4px">Дата: ${todayStr()} · возраст ${a??'—'} · ${m?'мужчина':'женщина'}</div>
+  </div>
+  <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+    <div style="flex:1;min-width:100px;border:1px solid #eee;border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:700">${k.bmi.toFixed(1)}</div><div style="font-size:11px;color:#666">ИМТ, ${bmiT}</div></div>
+    <div style="flex:1;min-width:100px;border:1px solid #eee;border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:700">${Math.round(k.kcal)}</div><div style="font-size:11px;color:#666">ккал в сутки</div></div>
+    <div style="flex:1;min-width:100px;border:1px solid #eee;border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:700">${Math.round(k.bmr)}</div><div style="font-size:11px;color:#666">Основной обмен</div></div>
+  </div>
+  ${block('Самодиагностика',li([
+    `Регулярность сна: ${sc}/5 (${sc<=2?'красная':sc<=4?'жёлтая':'зелёная'} зона)`,
+    `Пищевой джетлаг: ${jh==null?'не измерен':jh.toFixed(1)+' ч'+(jh>2?' — есть джетлаг':' — норма')}`,
+    `Задержка дыхания: ${isNaN(bh)?'не измерен':bh+' сек'}`,
+    `Тест «Сесть–Встать»: ${isNaN(ss)?'не измерен':ss+' сек'}`,
+    `Стресс: ${stressTxt}`
+  ]))}
+  ${block('Анализы', R.length?li(R.map(l=>`${l.n}: ${l.v} ${l.u} — ${LBL[l.st]||l.st}`)):'<p style="color:#666">Анализы не введены.</p>')}
+  ${bad.some(l=>l.st=='cr')?'<p style="background:#F9DAD6;color:#A3241B;padding:8px 10px;border-radius:6px;font-size:12px">Есть критические отклонения — консультация врача.</p>':''}
+  ${block('Факторы риска', risks.length?li(risks):'<p style="color:#666">Значимых факторов не выявлено.</p>')}
+  ${block('Цели', `<p>${goalTxt}${S.tw?' до '+S.tw+' кг за '+(S.weeks||12)+' нед.':''}${S.bf||S.tbf?`. Жир: ${S.bf||'—'}% → ${S.tbf||'—'}%`:''}${S.mus?`. Мышцы: ${S.mus}`:''}</p>`)}
+  ${block('КБЖУ', `
+    <p><b>${Math.round(k.kcal)}</b> ккал · белки <b>${Math.round(k.p)} г</b> · жиры <b>${Math.round(k.f)} г</b> · углеводы <b>${Math.round(k.c)} г</b> · вода <b>${(k.water/1000).toFixed(1)} л</b></p>
+    <p style="color:#666;font-size:11px">Основной обмен ${Math.round(k.bmr)} · расход ${Math.round(k.tdee)} · ${k.delta>0?'профицит':k.delta<0?'дефицит':'баланс'} ${Math.abs(Math.round(k.delta))} ккал · формула Миффлин — Сан Жеор</p>
+  `)}
+  ${block('Рекомендации', `
+    <p><b>Питание.</b> Тип: ${S.diet||'не указано'}. Источники белка: ${pf}. Вода ~${(k.water/1000).toFixed(1)} л/день.${S.allergy?' Исключить: '+S.allergy+'.':''}</p>
+    <table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:12px"><thead><tr><th style="text-align:left;padding:4px 6px;border-bottom:1px solid #ddd">Меню на день</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid #ddd">ккал</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid #ddd">белок</th></tr></thead><tbody>${menuRows}</tbody></table>
+    <p><b>Сон и стресс.</b> ${sc<=2||sf>='3'||n('sleep')<7?'Регулярное время сна ±30 мин, утренний свет, экраны за час до сна, дыхание 6 вдохов/мин перед сном.':'Сохраняйте регулярность сна и режим отдыха.'}</p>
+    <p><b>Активность.</b> ${parseFloat(S.act)<=1.2?'Ходьба 30 мин 4 раза в неделю + 2 силовые.':'2–3 силовые и 1–2 кардио в неделю, 7000–10000 шагов/день.'}${tr?' Цель: '+tr+'.':''}</p>
+    <p><b>Профилактика.</b> Терапевт и анализы крови — раз в год; стоматолог — 2 раза в год; грипп ежегодно, АДС раз в 10 лет.</p>
+  `)}
+  <p style="margin-top:18px;font-size:10px;color:#999">Сервис не является медицинским диагностическим инструментом.</p>
+ </div>`;
+ return {html, name:(S.name||'паспорт').replace(/[\\/:*?"<>|]/g,'').trim()||'паспорт'};
+}
+
+async function downloadPassportPdf(){
+ if(typeof html2pdf==='undefined'){alert('Не удалось сформировать PDF. Используйте «Печать» → «Сохранить как PDF».');return}
+ const doc=buildPassportDocHtml();
+ if(!doc){alert('Заполните дату рождения, рост и вес, чтобы сформировать паспорт.');return}
+ const btn=$('btnPdf');
+ if(btn){btn.disabled=true;btn.textContent='Сохранение…'}
+ window.scrollTo(0,0);
+ const opt={
+   margin:[10,10,10,10],
+   filename:'Паспорт_здоровья_'+doc.name+'.pdf',
+   image:{type:'jpeg',quality:0.98},
+   html2canvas:{scale:2,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0},
+   jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+   pagebreak:{mode:['css','legacy'],avoid:['li','tr']}
+ };
+ const done=()=>{if(btn){btn.disabled=false;btn.textContent='Скачать PDF'}};
+ html2pdf().set(opt).from(doc.html,'string').save()
+   .then(done)
+   .catch(e=>{console.error(e);done();alert('Ошибка PDF. Используйте «Печать» → «Сохранить как PDF».')});
+}
+
+function printPassport(){
+ const doc=buildPassportDocHtml();
+ if(!doc){alert('Заполните дату рождения, рост и вес, чтобы напечатать паспорт.');return}
+ let sheet=$('printSheet');
+ if(!sheet){sheet=document.createElement('div');sheet.id='printSheet';document.body.appendChild(sheet)}
+ sheet.innerHTML=doc.html;
+ setTimeout(()=>window.print(),50);
+}
+
+
+function show(t){
+ document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==t));
+ document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t==t));
+ if(t=='labs')updLabs()
+ if(t=='kbzhu')updK();
+ if(t=='passport')passport();
+ if(t=='compare')fillCompare();
+ if(t=='patients')loadPatients();
+ if(t=='admin')loadAdmin();
+}
+
+const AL=['Нет','Редко','Регулярно'];
+const EX=[
+  ['Здоровье',[
+    ['chronic','Хронические заболевания',null,'например, гипертония, астма — или «нет»'],
+    ['ops','Операции и травмы',null,'например, аппендэктомия 2019 — или «нет»'],
+    ['compl','Текущие жалобы',null,'например, усталость, головные боли'],
+    ['meds','Принимаемые лекарства',null,'например, витамин D 2000 МЕ — или «нет»']
+  ]],
+  ['Питание и привычки',[
+    ['meals','Приёмов пищи в день','number','например, 3'],
+    ['fav','Любимые продукты',null,'например, курица, творог, овощи'],
+    ['dis','Нелюбимые продукты',null,'например, морепродукты, брокколи'],
+    ['alc','Алкоголь',AL],
+    ['caf','Кофеин, чашек в день','number','например, 2']
+  ]],
+  ['Размеры тела',[
+    ['waist','Талия, см','number','например, 72'],
+    ['hips','Бёдра, см','number','например, 98'],
+    ['chest','Грудь, см','number','например, 90']
+  ]],
+  ['Окружение',[
+    ['fam','Семейное положение',['Не указано','Один(на)','В паре','Семья с детьми']],
+    ['support','Поддержка близких',['Да','Частично','Нет']],
+    ['gym','Доступ к спортзалу',['Да','Нет']]
+  ]]
+];
+$('extra').innerHTML=EX.map(([t,fs])=>`<div class="card"><h2>${t}</h2><div class="grid">${fs.map(([id,lb,ty,ph])=>`<label>${lb}${Array.isArray(ty)?`<select id="${id}">${ty.map(o=>`<option>${o}</option>`).join('')}</select>`:`<input id="${id}"${ty==='number'?' type="number"':''}${ph?` placeholder="${ph}"`:''}>`}</label>`).join('')}</div></div>`).join('');
+EX.forEach(g=>g[1].forEach(f=>IDS.push(f[0])));
+
+let saveTimer=null;
+function autoSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveQ,700)}
+async function saveQ(){
+ if(!CURRENT_USER)return;
+ if(!CURRENT_QID){
+   const {data,error}=await sb.from('questionnaires').insert({user_id:CURRENT_USER.id,data:S,label:$('qLabel').value||('Анкета от '+todayStr())}).select().single();
+   if(!error&&data)CURRENT_QID=data.id;
+ }else{
+   await sb.from('questionnaires').update({data:S,label:$('qLabel').value||('Анкета от '+todayStr()),updated_at:new Date().toISOString()}).eq('id',CURRENT_QID);
+ }
+ await sb.from('profiles').update({full_name:S.name||null,sex:S.sex||null,birth_date:S.dob||null,height_cm:val('h')||null}).eq('id',CURRENT_USER.id);
+ loadQList();
+}
+
+async function loadQList(){
+ if(!CURRENT_USER)return;
+ const {data}=await sb.from('questionnaires').select('id,label,created_at').eq('user_id',CURRENT_USER.id).order('created_at',{ascending:false});
+ QLIST=data||[];
+ const opts=QLIST.map(q=>`<option value="${q.id}">${q.label||('Анкета от '+new Date(q.created_at).toLocaleDateString('ru-RU'))}</option>`).join('');
+ $('qList').innerHTML=opts;
+ $('cmpA').innerHTML=opts;
+ $('cmpB').innerHTML=opts;
+}
+
+async function openQ(id){
+ if(!id)return;
+ const {data}=await sb.from('questionnaires').select('*').eq('id',id).single();
+ if(!data)return;
+ CURRENT_QID=id;
+ Object.keys(S).forEach(k=>delete S[k]);
+ Object.assign(S,data.data||{});
+ S.hist=S.hist||[];
+ $('qLabel').value=data.label||'';
+ IDS.forEach(k=>{
+   const e=$(k); if(!e) return;
+   if(e.type==='checkbox') e.checked = S[k]==='1'||S[k]===true;
+   else e.value = S[k]??'';
+ });
+ buildLabs();
+ updSelfTests();
+ if($('labs').classList.contains('on'))updLabs();
+ if($('kbzhu').classList.contains('on'))updK();
+ if($('passport').classList.contains('on'))passport();
+}
+
+$('qList').onchange=()=>openQ($('qList').value);
+$('qLabel').oninput=()=>autoSave();
+$('qNew').onclick=async()=>{
+ if(!CURRENT_USER)return;
+ const {data,error}=await sb.from('questionnaires').insert({user_id:CURRENT_USER.id,data:{},label:'Анкета от '+todayStr()}).select().single();
+ if(error){alert(error.message);return}
+ CURRENT_QID=data.id;
+ Object.keys(S).forEach(k=>delete S[k]);
+ IDS.forEach(k=>{const e=$(k);if(e)e.value='';});
+ $('qLabel').value=data.label;
+ buildLabs();updSelfTests();loadQList();
+};
+$('qDel').onclick=async()=>{
+ if(!CURRENT_QID)return;
+ if(!confirm('Удалить эту анкету?'))return;
+ await sb.from('questionnaires').delete().eq('id',CURRENT_QID);
+ CURRENT_QID=null;
+ Object.keys(S).forEach(k=>delete S[k]);
+ IDS.forEach(k=>{const e=$(k);if(e)e.value='';});
+ buildLabs();updSelfTests();loadQList();
+};
+
+function cmpVerdict(kind,va,vb,ref){
+  // kind: 'lab' | 'higher' | 'lower' | 'bmi' | 'neutral'
+  if(isNaN(va)||isNaN(vb)) return {txt:'—',cls:''};
+  const same=Math.abs(vb-va)<1e-9||(Math.abs(va)>0&&Math.abs(vb-va)/Math.abs(va)<0.01);
+  if(same) return {txt:'без изменений',cls:''};
+
+  if(kind==='lab'&&ref){
+    const [lo,hi]=ref;
+    const stA=status(va,ref), stB=status(vb,ref);
+    const rank={ok:0,lo:1,hi:1,cr:2};
+    const rA=rank[stA]??1, rB=rank[stB]??1;
+    if(stB==='ok'&&stA==='ok') return {txt:'норма',cls:'ok'};
+    if(rB<rA) return {txt:'лучше',cls:'ok'};
+    if(rB>rA) return {txt:'хуже',cls:'cr'};
+    // same zone but moved — closer to center of range = better
+    if(lo!=null&&hi!=null){
+      const mid=(lo+hi)/2;
+      const dA=Math.abs(va-mid), dB=Math.abs(vb-mid);
+      if(dB<dA*0.95) return {txt:'лучше',cls:'ok'};
+      if(dB>dA*1.05) return {txt:'хуже',cls:'cr'};
+    }
+    return {txt:'без изменений',cls:''};
+  }
+  if(kind==='bmi'){
+    const ideal=22;
+    const dA=Math.abs(va-ideal), dB=Math.abs(vb-ideal);
+    if(dB<dA*0.95) return {txt:'лучше',cls:'ok'};
+    if(dB>dA*1.05) return {txt:'хуже',cls:'cr'};
+    return {txt:'без изменений',cls:''};
+  }
+  if(kind==='higher'){ // больше = лучше (сон, задержка дыхания)
+    if(vb>va) return {txt:'лучше',cls:'ok'};
+    if(vb<va) return {txt:'хуже',cls:'cr'};
+    return {txt:'без изменений',cls:''};
+  }
+  if(kind==='lower'){ // меньше = лучше (талия, сесть-встать)
+    if(vb<va) return {txt:'лучше',cls:'ok'};
+    if(vb>va) return {txt:'хуже',cls:'cr'};
+    return {txt:'без изменений',cls:''};
+  }
+  // neutral — just show direction
+  if(vb>va) return {txt:'выросло',cls:'hi'};
+  if(vb<va) return {txt:'снизилось',cls:'hi'};
+  return {txt:'без изменений',cls:''};
+}
+
+async function fillCompare(){
+ if(!CURRENT_USER)return;
+ if(!QLIST.length){$('cmpOut').innerHTML='<p class="note">Нет анкет.</p>';return}
+ if(!$('cmpA').value&&QLIST[0])$('cmpA').value=QLIST[0].id;
+ if(!$('cmpB').value&&QLIST[1])$('cmpB').value=QLIST[1].id;
+ if($('cmpA').value==$('cmpB').value){$('cmpOut').innerHTML='<p class="note">Выберите две разные анкеты.</p>';return}
+ const [a,b]=await Promise.all([
+   sb.from('questionnaires').select('*').eq('id',$('cmpA').value).single(),
+   sb.from('questionnaires').select('*').eq('id',$('cmpB').value).single()
+ ]);
+ if(!a.data||!b.data){$('cmpOut').innerHTML='<p class="note">Не удалось загрузить.</p>';return}
+ const A=a.data.data||{},B=b.data.data||{};
+ const sex=B.sex||A.sex||'f';
+ const ageFrom=d=>{if(!d)return 30;const dt=new Date(d),n=new Date();let x=n.getFullYear()-dt.getFullYear();if(n<new Date(n.getFullYear(),dt.getMonth(),dt.getDate()))x--;return x};
+ const ag=ageFrom(B.dob||A.dob);
+
+ const rows=[]; // [label, va, vb, deltaStr, verdictHtml]
+ const push=(label,va,vb,kind,ref)=>{
+   const na=parseFloat(va), nb=parseFloat(vb);
+   if(isNaN(na)&&isNaN(nb)) return;
+   const d=(!isNaN(na)&&!isNaN(nb))?(nb-na):null;
+   const v=cmpVerdict(kind,na,nb,ref);
+   const dStr=d==null?'—':((d>0?'+':'')+(Math.abs(d)>=1?+d.toFixed(1):+d.toFixed(2)));
+   const badge=v.txt==='—'?v.txt:`<span class="b ${v.cls||''}">${v.txt}</span>`;
+   rows.push([label,isNaN(na)?'—':na,isNaN(nb)?'—':nb,dStr,badge]);
+ };
+
+ push('Вес, кг',A.w,B.w,'neutral');
+ push('Рост, см',A.h,B.h,'neutral');
+ push('Талия, см',A.waist,B.waist,'lower');
+ push('Бёдра, см',A.hips,B.hips,'neutral');
+ push('Сон, ч',A.sleep,B.sleep,'higher');
+ push('Задержка дыхания, сек',A.breathHold,B.breathHold,'higher');
+ push('Сесть–встать, сек',A.sitStand,B.sitStand,'lower');
+
+ const imA=(A.h&&A.w)?(A.w/Math.pow(A.h/100,2)):NaN;
+ const imB=(B.h&&B.w)?(B.w/Math.pow(B.h/100,2)):NaN;
+ if(!isNaN(imA)||!isNaN(imB)){
+   const d=(!isNaN(imA)&&!isNaN(imB))?(imB-imA):null;
+   const v=cmpVerdict('bmi',imA,imB);
+   const dStr=d==null?'—':((d>0?'+':'')+d.toFixed(1));
+   const badge=`<span class="b ${v.cls||''}">${v.txt}</span>`;
+   rows.push(['ИМТ',isNaN(imA)?'—':imA.toFixed(1),isNaN(imB)?'—':imB.toFixed(1),dStr,badge]);
+ }
+
+ LABS.forEach((l,i)=>{
+   const ref=l.r(sex,ag);
+   push(l.n,A['lab'+i],B['lab'+i],'lab',ref);
+ });
+
+ const la=a.data.label||('Анкета от '+new Date(a.data.created_at).toLocaleDateString('ru-RU'));
+ const lb=b.data.label||('Анкета от '+new Date(b.data.created_at).toLocaleDateString('ru-RU'));
+ const better=rows.filter(r=>String(r[4]).includes('лучше')).length;
+ const worse=rows.filter(r=>String(r[4]).includes('хуже')).length;
+ const summary=better||worse
+   ?`<p class="note" style="margin-bottom:10px">Итого по сравнению <b>А → Б</b>: <span class="b ok">лучше: ${better}</span> · <span class="b cr">хуже: ${worse}</span></p>`
+   :`<p class="note" style="margin-bottom:10px">Существенных изменений между анкетами не видно.</p>`;
+ $('cmpOut').innerHTML=`${summary}<div class="scroll"><table><thead><tr><th>Показатель</th><th>${la}</th><th>${lb}</th><th>Δ</th><th>Оценка</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('')}</tbody></table></div>
+ <p class="note" style="margin-top:10px">Оценка: <b>лучше</b> — показатель улучшился, <b>хуже</b> — ухудшился, <b>норма</b> — оба в норме, <b>без изменений</b> — почти одинаково.</p>`;
+}
+$('cmpA').onchange=fillCompare;$('cmpB').onchange=fillCompare;
+
+async function saveLabs(){
+  const has=LABS.some((_,i)=>S['lab'+i]!=null&&S['lab'+i]!=='');
+  if(!has){$('impmsg').textContent='Сначала введите хотя бы одно значение.';return}
+  await saveQ();
+  $('impmsg').textContent='Сохранено в анкету';
+}
+
+const THEME_BTN=`<button type="button" class="theme-btn" id="themeBtn" title="Сменить тему" aria-label="Сменить тему">
+<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 14.3A9 9 0 1 1 9.7 3a7 7 0 0 0 11.3 11.3z"/></svg>
+<svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+</button>`;
+function applyTheme(t){
+  const theme=(t==='dark')?'dark':'light';
+  const root=document.documentElement;
+  root.setAttribute('data-theme',theme);
+  root.classList.remove('theme-light','theme-dark');
+  root.classList.add(theme==='dark'?'theme-dark':'theme-light');
+  try{root.style.colorScheme=theme==='dark'?'only dark':'only light'}catch(e){}
+  try{localStorage.setItem('hp-theme',theme)}catch(e){}
+}
+function currentTheme(){
+  const a=document.documentElement.getAttribute('data-theme');
+  if(a==='dark'||a==='light')return a;
+  try{
+    const s=localStorage.getItem('hp-theme');
+    if(s==='dark'||s==='light')return s;
+  }catch(e){}
+  return (window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';
+}
+function toggleTheme(){
+  const btn=$('themeBtn');
+  if(btn){btn.classList.remove('spin');void btn.offsetWidth;btn.classList.add('spin')}
+  const next=currentTheme()==='dark'?'light':'dark';
+  applyTheme(next);
+}
+function bindThemeBtn(){
+  const el=$('themeBtn');
+  if(el)el.onclick=toggleTheme;
+}
+function renderAuth(){
+ const b=$('authbar');
+ if(CURRENT_USER){
+  const rn={user:'пользователь',doctor:'врач',admin:'администратор'}[ROLE];
+  b.innerHTML=`<span class="who">Вы вошли: <b>${CURRENT_USER.email}</b> <span class="role ${ROLE}">${rn}</span></span>${THEME_BTN}<button class="btn sec" id="btnOut">Выйти</button>`;
+  $('btnOut').onclick=async()=>{await sb.auth.signOut();CURRENT_USER=null;CURRENT_QID=null;ROLE='user';renderAuth();$('app').style.display='none';$('locked').style.display='block'};
+  $('app').style.display='block';
+  $('locked').style.display='none';
+  $('tabAdmin').classList.toggle('hidden',ROLE!='admin');
+  $('tabPatients').classList.toggle('hidden',ROLE!='admin'&&ROLE!='doctor');
+ }else{
+  b.innerHTML=`${THEME_BTN}<button class="btn" id="btnLogin">Войти</button><button class="btn sec" id="btnSignup">Зарегистрироваться</button>`;
+  $('btnLogin').onclick=()=>$('mLogin').classList.add('on');
+  $('btnSignup').onclick=()=>$('mSignup').classList.add('on');
+  $('app').style.display='none';
+  $('locked').style.display='block';
+ }
+ bindThemeBtn();
+}
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('on'));
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('on')}));
+
+function authErr(msg){
+  if(!msg) return 'Что-то пошло не так. Попробуйте ещё раз.';
+  const m=msg.toLowerCase();
+  if(m.includes('invalid login credentials')||m.includes('invalid credentials')) return 'Неверный email или пароль';
+  if(m.includes('email not confirmed')) return 'Подтвердите email — письмо уже отправлено';
+  if(m.includes('user already registered')||m.includes('already been registered')) return 'Этот email уже зарегистрирован';
+  if(m.includes('password')&&(m.includes('least')||m.includes('short')||m.includes('6'))) return 'Пароль должен быть не короче 6 символов';
+  if(m.includes('invalid email')||m.includes('unable to validate email')) return 'Некорректный email';
+  if(m.includes('rate limit')||m.includes('too many')) return 'Слишком много попыток. Подождите немного';
+  if(m.includes('network')||m.includes('fetch')) return 'Нет связи с сервером. Проверьте интернет';
+  return msg;
+}
+$('doSignup').onclick=async()=>{
+ const email=$('suEmail').value.trim(),pass=$('suPass').value;
+ $('suErr').textContent='';
+ if(!email||pass.length<6){$('suErr').textContent='Email и пароль не короче 6 символов.';return}
+ const {error}=await sb.auth.signUp({email,password:pass});
+ if(error){$('suErr').textContent=authErr(error.message);return}
+ $('mSignup').classList.remove('on');
+ alert('Регистрация успешна! Проверьте почту для подтверждения.');
+};
+$('doLogin').onclick=async()=>{
+ const email=$('loginEmail').value.trim(),pass=$('loginPass').value;
+ $('loginErr').textContent='';
+ const {error}=await sb.auth.signInWithPassword({email,password:pass});
+ if(error){$('loginErr').textContent=authErr(error.message);return}
+ $('mLogin').classList.remove('on');
+};
+$('forgot').onclick=async()=>{
+ const email=$('loginEmail').value.trim();
+ if(!email){alert('Введите email в поле выше.');return}
+ const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin});
+ if(error)alert(authErr(error.message));else alert('Письмо для сброса пароля отправлено.');
+};
+
+async function loadRole(){
+ if(!CURRENT_USER)return;
+ const {data}=await sb.from('profiles').select('role').eq('id',CURRENT_USER.id).single();
+ ROLE=data?.role||'user';
+}
+
+async function loadPatients(){
+ if(!CURRENT_USER||(ROLE!='doctor'&&ROLE!='admin'))return;
+ const {data}=await sb.from('profiles').select('id,full_name,role,created_at');
+ const users=(data||[]).filter(u=>u.id!=CURRENT_USER.id);
+ $('patList').innerHTML=users.length?`<div class="scroll"><table><thead><tr><th>Имя</th><th>Роль</th><th></th></tr></thead><tbody>${users.map(u=>`<tr><td>${u.full_name||'—'}</td><td>${u.role}</td><td><button class="btn small" data-pat="${u.id}">Открыть</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Других пользователей нет.</p>';
+ document.querySelectorAll('[data-pat]').forEach(b=>b.onclick=()=>openPatient(b.dataset.pat));
+}
+async function openPatient(uid){
+ const {data:q}=await sb.from('questionnaires').select('*').eq('user_id',uid).order('created_at',{ascending:false}).limit(1);
+ const {data:p}=await sb.from('profiles').select('*').eq('id',uid).single();
+ $('patView').innerHTML=`<div class="card"><h2>Пациент: ${p?.full_name||p?.id?.slice(0,8)}</h2>
+ <p class="note">Пол: ${p?.sex||'—'} · дата рождения: ${p?.birth_date||'—'} · рост: ${p?.height_cm||'—'}</p>
+ <h3>Последняя анкета</h3><pre style="white-space:pre-wrap;font-size:13px">${q&&q[0]?JSON.stringify(q[0].data,null,1):'нет данных'}</pre>
+ <h3>Заключение врача</h3>
+ <textarea id="docNote" placeholder="Ваше заключение…"></textarea>
+ <button class="btn" id="docSave" style="margin-top:8px">Сохранить заключение</button>
+ <div id="docMsg"></div></div>`;
+ $('docSave').onclick=async()=>{
+   const text=$('docNote').value.trim();
+   if(!text)return;
+   const {data:pass}=await sb.from('health_passports').insert({user_id:uid,snapshot:{note:text}}).select().single();
+   if(pass){await sb.from('doctor_notes').insert({passport_id:pass.id,doctor_id:CURRENT_USER.id,note:text});$('docMsg').textContent='Сохранено.';}
+ };
+}
+
+async function loadAdmin(){
+ if(!CURRENT_USER||ROLE!='admin')return;
+ $('adminMsg').textContent='';
+ const {data,error}=await sb.from('profiles').select('id,full_name,role,created_at');
+ if(error){$('adminMsg').textContent=error.message;return}
+ $('adminList').innerHTML=`<div class="scroll"><table><thead><tr><th>ID</th><th>Имя</th><th>Роль</th><th></th></tr></thead><tbody>${(data||[]).map(u=>`<tr><td>${u.id.slice(0,8)}…</td><td>${u.full_name||'—'}</td><td><select data-role="${u.id}"><option value="user"${u.role=='user'?' selected':''}>Пользователь</option><option value="doctor"${u.role=='doctor'?' selected':''}>Врач</option><option value="admin"${u.role=='admin'?' selected':''}>Админ</option></select></td><td><button class="btn small" data-saverole="${u.id}">Сохранить</button></td></tr>`).join('')}</tbody></table></div>`;
+ document.querySelectorAll('[data-saverole]').forEach(b=>b.onclick=async()=>{
+   const id=b.dataset.saverole;
+   const role=document.querySelector(`[data-role="${id}"]`).value;
+   const {error}=await sb.from('profiles').update({role}).eq('id',id);
+   if(error)alert(error.message);else b.textContent='✓';
+ });
+ const [{count:uc},{count:qc},{count:pc}]=await Promise.all([
+   sb.from('profiles').select('*',{count:'exact',head:true}),
+   sb.from('questionnaires').select('*',{count:'exact',head:true}),
+   sb.from('health_passports').select('*',{count:'exact',head:true})
+ ]);
+ $('adminStats').innerHTML=`<div class="big"><div><b>${uc||0}</b><span>пользователей</span></div><div><b>${qc||0}</b><span>анкет</span></div><div><b>${pc||0}</b><span>паспортов</span></div></div>`;
+}
+
+async function afterAuth(){
+ await loadRole();
+ renderAuth();
+ applyGate(); // после роли — снять блокировку у админа/врача
+ await loadQList();
+ if(QLIST.length){await openQ(QLIST[0].id);}else{await $('qNew').onclick();}
+ applyGate();
+}
+async function init(){
+ try{applyTheme(currentTheme())}catch(e){applyTheme('light')}
+ IDS.forEach(id=>{
+   const e=$(id); if(!e) return;
+   const handler=()=>{
+     S[id]=e.value;
+     autoSave();
+     if(['mealWD','mealWE','breathHold','sitStand','stressFreq'].includes(id)) updSelfTests();
+     if(['sex','dob','h','w'].includes(id)){updLabs();if($('kbzhu')?.classList.contains('on'))updK();if($('passport')?.classList.contains('on'))passport()}
+   };
+   e.addEventListener('input', handler);
+   e.addEventListener('change', handler);
+ });
+ // Yes/No buttons for sleep questions
+ document.querySelectorAll('.yn-row').forEach(row=>{
+   row.querySelectorAll('button').forEach(btn=>{
+     btn.addEventListener('click',()=>{
+       const q=row.dataset.q;
+       S[q]=btn.dataset.v;
+       autoSave();
+       updSelfTests();
+     });
+   });
+ });
+ // Password show/hide
+ document.querySelectorAll('.pass-toggle').forEach(btn=>{
+   btn.addEventListener('click',()=>{
+     const inp=$(btn.dataset.toggle);
+     if(!inp) return;
+     const show=inp.type==='password';
+     inp.type=show?'text':'password';
+     btn.querySelector('.eye-open').style.display=show?'none':'block';
+     btn.querySelector('.eye-off').style.display=show?'block':'none';
+     btn.title=show?'Скрыть пароль':'Показать пароль';
+   });
+ });
+ buildLabs();
+ updSelfTests();
+ $('labSave').addEventListener('click',saveLabs);
+ document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
+   if(b.disabled) return;
+   show(b.dataset.t);
+ }));
+ const {data:{session}}=await sb.auth.getSession();
+ CURRENT_USER=session?.user||null;
+ if(CURRENT_USER)await afterAuth();else renderAuth();
+ sb.auth.onAuthStateChange(async(_e,s)=>{
+   const hadUser=!!CURRENT_USER;
+   CURRENT_USER=s?.user||null;
+   if(CURRENT_USER&&!hadUser)await afterAuth();
+   else renderAuth();
+ });
+}
+init();
+</script>
+</body>
+</html>
